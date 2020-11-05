@@ -6,6 +6,7 @@ import torch
 
 import utils.general as utils
 import utils.plots as plt
+from ipdb import set_trace as st
 
 class IDRTrainRunner():
     def __init__(self,**kwargs):
@@ -79,6 +80,9 @@ class IDRTrainRunner():
         dataset_conf = self.conf.get_config('dataset')
         if kwargs['scan_id'] != -1:
             dataset_conf['scan_id'] = kwargs['scan_id']
+
+        # add train_set instead of training on all image
+        dataset_conf['train_set'] = self.conf.get_list('train.train_set')
 
         self.train_dataset = utils.get_class(self.conf.get_string('train.dataset_class'))(self.train_cameras,
                                                                                           **dataset_conf)

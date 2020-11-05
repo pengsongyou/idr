@@ -1,6 +1,7 @@
 import os
 from glob import glob
 import torch
+from ipdb import set_trace as st
 
 def mkdir_ifnotexists(directory):
     if not os.path.exists(directory):
@@ -14,10 +15,16 @@ def get_class(kls):
         m = getattr(m, comp)
     return m
 
-def glob_imgs(path):
+def glob_imgs(path, img_list=None):
     imgs = []
-    for ext in ['*.png', '*.jpg', '*.JPEG', '*.JPG']:
-        imgs.extend(glob(os.path.join(path, ext)))
+    if img_list:
+        for i in img_list:
+            for ext in ['%06d.png'%i, '%03d.png'%i]:
+                imgs.extend(glob(os.path.join(path, ext)))
+            # imgs.extend(glob(os.path.join(path, '%06d.png'%i)))        
+    else:
+        for ext in ['*.png', '*.jpg', '*.JPEG', '*.JPG']:
+            imgs.extend(glob(os.path.join(path, ext)))
     return imgs
 
 def split_input(model_input, total_pixels):
