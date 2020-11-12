@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
+from ipdb import set_trace as st
 
 class IDRLoss(nn.Module):
     def __init__(self, eikonal_weight, mask_weight, alpha):

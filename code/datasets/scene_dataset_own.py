@@ -15,10 +15,12 @@ class SceneDataset(torch.utils.data.Dataset):
                  img_res,
                  scan_id=0,
                  cam_file=None,
-                 train_set = None
+                 train_set = None,
+                 test_set = None
                  ):
 
         self.train_list = train_set
+        self.test_list = test_set
         
         self.instance_dir = os.path.join('../data', data_dir, 'scan{0}'.format(scan_id))
 
@@ -31,12 +33,19 @@ class SceneDataset(torch.utils.data.Dataset):
         self.train_cameras = train_cameras
 
         image_dir = '{0}/image'.format(self.instance_dir)
-        image_paths = sorted(utils.glob_imgs(image_dir, img_list=self.train_list))
+        # image_paths = sorted(utils.glob_imgs(image_dir, img_list=self.train_list))
+        image_paths = sorted(utils.glob_imgs(image_dir))
         mask_dir = '{0}/mask'.format(self.instance_dir)
-        mask_paths = sorted(utils.glob_imgs(mask_dir, img_list=self.train_list))
+        # mask_paths = sorted(utils.glob_imgs(mask_dir, img_list=self.train_list))
+        mask_paths = sorted(utils.glob_imgs(mask_dir))
 
+        n_images_total = len(image_paths)
+        if self.test_list: # ignore test images
+            image_paths = [image_paths[idx] for idx in range(
+                n_images_total) if idx not in self.test_list]
+            mask_paths = [mask_paths[idx] for idx in range(
+                n_images_total) if idx not in self.test_list]
         self.n_images = len(image_paths)
-        
 
         self.cam_file = '{0}/cameras.npz'.format(self.instance_dir)
         if cam_file is not None:
@@ -47,6 +56,9 @@ class SceneDataset(torch.utils.data.Dataset):
         if self.train_list:
             scale_mats = [camera_dict['scale_mat_%d' % idx].astype(np.float32) for idx in self.train_list]
             world_mats = [camera_dict['world_mat_%d' % idx].astype(np.float32) for idx in self.train_list]
+        elif self.test_list:
+            scale_mats = [camera_dict['scale_mat_%d' % idx].astype(np.float32) for idx in range(n_images_total) if idx not in self.test_list]
+            world_mats = [camera_dict['world_mat_%d' % idx].astype(np.float32) for idx in range(n_images_total) if idx not in self.test_list]
         else:
             scale_mats = [camera_dict['scale_mat_%d' % idx].astype(np.float32) for idx in range(self.n_images)]
             world_mats = [camera_dict['world_mat_%d' % idx].astype(np.float32) for idx in range(self.n_images)]
@@ -126,23 +138,22 @@ class SceneDataset(torch.utils.data.Dataset):
     def get_scale_mat(self):
         return np.load(self.cam_file)['scale_mat_0']
 
-    def get_gt_pose(self, scaled=False):
-        # Load gt pose without normalization to unit sphere
-        st()
-        camera_dict = np.load(self.cam_file)
-        world_mats = [camera_dict['world_mat_%d' % idx].astype(np.float32) for idx in range(self.n_images)]
-        scale_mats = [camera_dict['scale_mat_%d' % idx].astype(np.float32) for idx in range(self.n_images)]
+    # def get_gt_pose(self, scaled=False):
+    #     # Load gt pose without normalization to unit sphere
+    #     camera_dict = np.load(self.cam_file)
+    #     world_mats = [camera_dict['world_mat_%d' % idx].astype(np.float32) for idx in range(self.n_images)]
+    #     scale_mats = [camera_dict['scale_mat_%d' % idx].astype(np.float32) for idx in range(self.n_images)]
 
-        pose_all = []
-        for scale_mat, world_mat in zip(scale_mats, world_mats):
-            P = world_mat
-            if scaled:
-                P = world_mat @ scale_mat
-            P = P[:3, :4]
-            _, pose = rend_util.load_K_Rt_from_P(None, P)
-            pose_all.append(torch.from_numpy(pose).float())
+    #     pose_all = []
+    #     for scale_mat, world_mat in zip(scale_mats, world_mats):
+    #         P = world_mat
+    #         if scaled:
+    #             P = world_mat @ scale_mat
+    #         P = P[:3, :4]
+    #         _, pose = rend_util.load_K_Rt_from_P(None, P)
+    #         pose_all.append(torch.from_numpy(pose).float())
 
-        return torch.cat([p.float().unsqueeze(0) for p in pose_all], 0)
+    #     return torch.cat([p.float().unsqueeze(0) for p in pose_all], 0)
 
     # def get_pose_init(self):
     #     # get noisy initializations obtained with the linear method

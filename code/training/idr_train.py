@@ -82,7 +82,15 @@ class IDRTrainRunner():
             dataset_conf['scan_id'] = kwargs['scan_id']
 
         # add train_set instead of training on all image
-        dataset_conf['train_set'] = self.conf.get_list('train.train_set')
+        try:
+            dataset_conf['train_set'] = self.conf.get_list('train.train_set')
+        except:
+            dataset_conf['train_set'] = None
+        
+        try:
+            dataset_conf['test_set'] = self.conf.get_list('train.test_set')
+        except:
+            dataset_conf['test_set'] = None
 
         self.train_dataset = utils.get_class(self.conf.get_string('train.dataset_class'))(self.train_cameras,
                                                                                           **dataset_conf)

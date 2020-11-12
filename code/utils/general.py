@@ -21,7 +21,6 @@ def glob_imgs(path, img_list=None):
         for i in img_list:
             for ext in ['%06d.png'%i, '%03d.png'%i]:
                 imgs.extend(glob(os.path.join(path, ext)))
-            # imgs.extend(glob(os.path.join(path, '%06d.png'%i)))        
     else:
         for ext in ['*.png', '*.jpg', '*.JPEG', '*.JPG']:
             imgs.extend(glob(os.path.join(path, ext)))
